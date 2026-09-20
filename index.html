@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>興嘉國小親子共讀護照 </title>
+<title>興嘉國小親子共讀護照 V2.3.6</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -190,7 +190,7 @@ th{background:#fff8ed;position:sticky;top:0}
 <body>
 <header>
  <div class="wrap hero">
-  <div class="brand"><div class="logo">📚</div><div><h1>興嘉國小親子共讀護照 </h1><p>陪伴閱讀・累積習慣・看見成長</p></div></div>
+  <div class="brand"><div class="logo">📚</div><div><h1>興嘉國小親子共讀護照 V2.3.6</h1><p>陪伴閱讀・累積習慣・看見成長</p></div></div>
   
 <div class="top-login-wrap">
   <button id="topLoginBtn" class="top-login-btn" onclick="toggleTopLoginMenu()">
@@ -449,7 +449,7 @@ th{background:#fff8ed;position:sticky;top:0}
 </div></div></div>
 
 <footer style="margin-top:40px;padding:34px 16px;text-align:center;background:#eaf4ef;border-top:1px solid #cfded7;color:#5f776f">
-  <b>嘉義市興嘉國民小學｜親子共讀護照 V2.3.5</b><br>
+  <b>嘉義市興嘉國民小學｜親子共讀護照 V2.3.6</b><br>
   <span style="font-size:13px">陪伴閱讀・累積習慣・看見成長</span>
 </footer>
 <div class="toast" id="toast"></div>
@@ -461,6 +461,38 @@ let data={records:[],tasks:[],awards:[],teachers:[],quotes:[],badges:[]};
 let charts={};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+
+function driveFileId(url){
+ const s=String(url||"");
+ let m=s.match(/[?&]id=([^&]+)/);
+ if(m)return m[1];
+ m=s.match(/\/d\/([^/]+)/);
+ if(m)return m[1];
+ return "";
+}
+function driveThumb(url,size=400){
+ const id=driveFileId(url);
+ return id ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${size}` : url;
+}
+function imgFallback(el,original){
+ if(!el)return;
+ if(el.dataset.fallbackDone==="1"){
+   el.onerror=null;
+   el.style.display="none";
+   const p=el.parentElement && el.parentElement.querySelector(".feed-ph");
+   if(p)p.style.display="grid";
+   return;
+ }
+ el.dataset.fallbackDone="1";
+ if(original && el.src!==original){
+   el.src=original;
+ }else{
+   el.style.display="none";
+   const p=el.parentElement && el.parentElement.querySelector(".feed-ph");
+   if(p)p.style.display="grid";
+ }
+}
+
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2300)}
 function today(){return new Date().toISOString().slice(0,10)}
 function currentMonth(){return today().slice(0,7)}
@@ -545,7 +577,7 @@ function renderPublicHome(){
  const latest=d.latest||[];
  $("latestFeed").innerHTML=latest.length?latest.map(r=>`
    <div class="feed-item">
-     ${r.photoUrl?`<img src="${esc(r.photoUrl)}" alt="共讀照片">`:`<div class="feed-ph">📖</div>`}
+     ${r.photoUrl?`<div><img src="${esc(driveThumb(r.photoUrl,360))}" data-original="${esc(r.photoUrl)}" onerror="imgFallback(this,this.dataset.original)" alt="共讀照片"><div class="feed-ph" style="display:none">📖</div></div>`:`<div class="feed-ph">📖</div>`}
      <div>
        <b>${esc(r.className)} ${esc(r.studentName)}｜《${esc(r.bookTitle)}》</b>
        <div class="meta">${esc(r.readDate||"")}</div>
@@ -560,7 +592,7 @@ function renderStudent(){
  $("myCount").textContent=rs.length;$("myMinutes").textContent=mins;$("myStreak").textContent=streak;$("myMonth").textContent=rs.filter(r=>monthKey(r.readDate||r.createdAt)===currentMonth()).length;
  const next=bs.slice().sort((a,b)=>a.need-b.need).find(b=>rs.length<Number(b.need));$("homeBadgeText").innerHTML=next?`再完成 <b>${Number(next.need)-rs.length}</b> 次共讀，就能獲得「${esc(next.icon)} ${esc(next.name)}」！`:"已完成目前全部徽章！";$("homeProgress").style.width=next?Math.min(100,rs.length/Number(next.need)*100)+"%":"100%";
  $("badgeList").innerHTML=bs.map(b=>`<div class="badge ${aw.some(a=>a.badgeCode===b.code)?"on":""}"><div class="icon">${esc(b.icon)}</div><b>${esc(b.name)}</b><div class="meta">累積 ${b.need} 次</div></div>`).join("");
- $("history").innerHTML=rs.length?rs.map(r=>`<div class="card" style="margin-bottom:10px"><b>${esc(r.readDate)}｜《${esc(r.bookTitle)}》</b><div class="meta">${r.minutes} 分鐘・${esc(r.companion)}</div><p>${esc(r.reflection)}</p>${r.photoUrl?`<img src="${esc(r.photoUrl)}" style="max-width:180px;border-radius:12px">`:""}</div>`).join(""):'<div class="meta">尚無紀錄。</div>';
+ $("history").innerHTML=rs.length?rs.map(r=>`<div class="card" style="margin-bottom:10px"><b>${esc(r.readDate)}｜《${esc(r.bookTitle)}》</b><div class="meta">${r.minutes} 分鐘・${esc(r.companion)}</div><p>${esc(r.reflection)}</p>${r.photoUrl?`<img src="${esc(driveThumb(r.photoUrl,500))}" data-original="${esc(r.photoUrl)}" onerror="imgFallback(this,this.dataset.original)" style="max-width:180px;border-radius:12px" alt="共讀照片">`:""}</div>`).join(""):'<div class="meta">尚無紀錄。</div>';
  renderTasks();$("certBtn").classList.toggle("hidden",rs.length<10);
 }
 function taskProgress(t,rs){const mr=rs.filter(r=>monthKey(r.readDate||r.createdAt)===t.month);if(t.type==="count")return mr.length;if(t.type==="minutes")return mr.reduce((s,r)=>s+Number(r.minutes||0),0);if(t.type==="streak")return calcStreak(mr);return 0}
