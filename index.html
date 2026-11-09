@@ -264,7 +264,7 @@ th{background:#fff8ed;position:sticky;top:0}
 
  <div class="section">
   <h2>✨ 最新共讀動態</h2>
-  <p class="sub">近期親子共讀紀錄、閱讀分享與照片。</p>
+  <p class="sub">點選每則動態，欣賞共讀照片與閱讀分享。</p>
   <div id="latestFeed" class="home-feed"></div>
  </div>
 </section>
@@ -575,15 +575,16 @@ function renderPublicHome(){
  );
 
  const latest=d.latest||[];
- $("latestFeed").innerHTML=latest.length?latest.map(r=>`
-   <div class="feed-item">
-     ${r.photoUrl?`<div><img src="${esc(driveThumb(r.photoUrl,360))}" data-original="${esc(r.photoUrl)}" onerror="imgFallback(this,this.dataset.original)" alt="共讀照片"><div class="feed-ph" style="display:none">📖</div></div>`:`<div class="feed-ph">📖</div>`}
-     <div>
+ $("latestFeed").innerHTML=latest.length?latest.map((r,index)=>`
+   <button type="button" class="feed-item feed-open" data-feed-index="${index}" aria-haspopup="dialog" aria-label="${esc('欣賞《'+(r.bookTitle||'共讀分享')+'》的共讀動態')}">
+     ${safeFeedPhoto(r.photoUrl)?`<span><img src="${esc(driveThumb(safeFeedPhoto(r.photoUrl),360))}" data-original="${esc(safeFeedPhoto(r.photoUrl))}" onerror="imgFallback(this,this.dataset.original)" loading="lazy" alt="共讀照片"><span class="feed-ph" style="display:none">📖</span></span>`:`<span class="feed-ph" aria-hidden="true">📖</span>`}
+     <span class="feed-copy">
        <b>${esc(r.className)} ${esc(r.studentName)}｜《${esc(r.bookTitle)}》</b>
-       <div class="meta">${esc(r.readDate||"")}</div>
-       <div class="summary">${esc(r.reflection||"")}</div>
-     </div>
-   </div>`).join(""):'<div class="meta">目前尚無共讀動態。</div>';
+       <span class="meta">${esc(formatFeedDate(r.readDate))}</span>
+       <span class="summary">${esc(r.reflection||"")}</span>
+       <span class="feed-cta">點開欣賞 →</span>
+     </span>
+   </button>`).join(""):'<div class="meta">目前尚無共讀動態。</div>';
 }
 function calcStreak(rs){const ds=[...new Set(rs.map(r=>String(r.readDate||r.createdAt).slice(0,10)))].sort().reverse();if(!ds.length)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000===1)n++;else break}return n}
 function renderAll(){if(session.role==="student")renderStudent();if(session.role==="teacher")renderTeacher();if(session.role==="admin")renderAdmin()}
@@ -628,7 +629,10 @@ async function deleteBadge(code){if(!confirm("確定刪除此徽章規則？既�
 function exportCSV(){const rs=data.records||[],cols=["readDate","className","studentName","bookTitle","author","publisher","minutes","companion","reflection","photoUrl"];const rows=[cols,...rs.map(r=>cols.map(c=>String(r[c]??"")))];const csv="\uFEFF"+rows.map(row=>row.map(v=>'"'+v.replace(/"/g,'""')+'"').join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="興嘉國小親子共讀護照V2.3.csv";a.click()}
 function openCertificate(){const rs=data.records||[],mins=rs.reduce((s,r)=>s+Number(r.minutes||0),0);$("certificateArea").innerHTML=`<h1>興嘉國小</h1><h2>親子共讀閱讀證書</h2><p>茲證明</p><div class="name">${esc(session.className)} ${esc(session.studentName)} 同學</div><p>持續參與親子共讀，累積完成 <b>${rs.length}</b> 次閱讀，<br>共計 <b>${mins}</b> 分鐘，特頒此證，以資鼓勵。</p>`;$("certificateModal").classList.remove("hidden")}
 function closeCertificate(){$("certificateModal").classList.add("hidden")}
-loadPublicHome();if(session)enterApp();
 </script>
+<link rel="stylesheet" href="feed-detail.css">
+<script src="feed-detail.js"></script>
+<script>loadPublicHome();if(session)enterApp();</script>
 </body>
 </html>
+
